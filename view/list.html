@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+
+        <h3>Registered users list</h3>
+        <table border="1">
+            <tr>
+                <td><b>User Id</b></td>
+                <td><b>User Name</b></td>
+                <td><b>Email</b></td>
+                <td><b>Password</b></td>
+                <td><b>Action</b></td>
+            </tr>
+        
+            {{range .users}}
+            <tr>
+                <td>{{.UserID}}</td>
+                <td>{{.Username}}</td>
+                <td>{{.Email}}</td>
+                <td>{{.Password}}</td>
+                <td>
+                    <a href="/users/edit/{{.UserID}}">Edit</a>
+                </td>
+                <td>
+                    <a href="/users/delete/{{.UserID}}">Delete</a>
+                </td>
+            </tr>
+            {{end}}
+        </table>
+        <br/>
+
+        <a href="/users/">Back to Register</a>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="/users/list">List</a>
+    </body>
+</html>
