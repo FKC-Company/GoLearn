@@ -13,24 +13,26 @@
     <div class="container">
         <div class="row">
 
-            <h3>User register</h3>
-            <form action="/users/list" method="post">
-                <div class="mb-3">
-                    <label class="form-label">User name</label>
-                    <input type="name" class="form-control" name="username">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password">
-                </div>
-                <input type="submit" value="Register" />
-                &nbsp;&nbsp;&nbsp;&nbsp;
-                <a href="/users/list">List</a>
-            </form>
+            <h3>Edit user</h3>
+            {{range .users}}
+                <form action="/users/edit/{{.UserID}}" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">User name</label>
+                        <input type="name" class="form-control" value="{{.Username}}" name="username">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" value="{{.Email}}" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" value="{{.Password}}"  name="password">
+                    </div>
+                    <input type="submit" value="Edit" />
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <a href="/users/list">List</a>
+                </form>
+            {{end}}
         </div>
     </div>
 

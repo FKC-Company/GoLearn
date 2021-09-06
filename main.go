@@ -7,10 +7,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/nyamka11/backEnd/controllers"
 	"github.com/nyamka11/backEnd/models"
-	"github.com/nyamka11/backEnd/routes"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -18,6 +20,9 @@ func main() {
 	ctx := context.Background()
 	route := gin.Default()
 	// route.GET("/", controllers.Users)
+
+	store := cookie.NewStore([]byte("secret"))
+	route.Use(sessions.Sessions("mysession", store))
 
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/test?parseTime=true")
 
@@ -34,7 +39,6 @@ func main() {
 				"title": "testTitle",
 			})
 		})
-
 		usersGroup.GET("/list", func(ctx *gin.Context) {
 			users, err := models.Users().AllG(ctx)
 			if err != nil {
@@ -45,17 +49,29 @@ func main() {
 				"users": users,
 			})
 		})
-
 		usersGroup.POST("/list", func(c *gin.Context) {
-			routes.Register(ctx, c)
+			controllers.Register(ctx, c)
 		})
-
 		usersGroup.GET("/delete/:user_id", func(c *gin.Context) {
-			routes.Delete(ctx, c)
+			controllers.Delete(ctx, c)
 		})
-
 		usersGroup.GET("/edit/:user_id", func(c *gin.Context) {
-			routes.Update(ctx, c)
+			controllers.Update(ctx, c)
+		})
+		usersGroup.POST("/edit/:user_id", func(c *gin.Context) {
+			controllers.UpdateExc(ctx, c)
+		})
+	}
+
+	auth := route.Group("auth")
+	{
+		auth.GET("/login", func(ctx *gin.Context) {
+			ctx.HTML(http.StatusOK, "login.html", map[string]interface{}{
+				"title": "testTitle",
+			})
+		})
+		auth.POST("/login", func(c *gin.Context) {
+			controllers.Login(ctx, c)
 		})
 	}
 

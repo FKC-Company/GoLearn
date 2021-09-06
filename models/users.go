@@ -23,37 +23,47 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	UserID   int    `form:"user_id" boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	Username string `form:"username" boil:"username" json:"username" toml:"username" yaml:"username"`
-	Email    string `form:"email" boil:"email" json:"email" toml:"email" yaml:"email"`
-	Password string `form:"password" boil:"password" json:"password" toml:"password" yaml:"password"`
+	UserID    int       `form:"user_id" boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Username  string    `form:"username" boil:"username" json:"username" toml:"username" yaml:"username"`
+	Email     string    `form:"email" boil:"email" json:"email" toml:"email" yaml:"email"`
+	Password  string    `form:"password" boil:"password" json:"password" toml:"password" yaml:"password"`
+	UpdatedAt time.Time `form:"updated_at" boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedAt time.Time `form:"created_at" boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 
 	R *userR `form:"-" boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `form:"-" boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserColumns = struct {
-	UserID   string
-	Username string
-	Email    string
-	Password string
+	UserID    string
+	Username  string
+	Email     string
+	Password  string
+	UpdatedAt string
+	CreatedAt string
 }{
-	UserID:   "user_id",
-	Username: "username",
-	Email:    "email",
-	Password: "password",
+	UserID:    "user_id",
+	Username:  "username",
+	Email:     "email",
+	Password:  "password",
+	UpdatedAt: "updated_at",
+	CreatedAt: "created_at",
 }
 
 var UserTableColumns = struct {
-	UserID   string
-	Username string
-	Email    string
-	Password string
+	UserID    string
+	Username  string
+	Email     string
+	Password  string
+	UpdatedAt string
+	CreatedAt string
 }{
-	UserID:   "users.user_id",
-	Username: "users.username",
-	Email:    "users.email",
-	Password: "users.password",
+	UserID:    "users.user_id",
+	Username:  "users.username",
+	Email:     "users.email",
+	Password:  "users.password",
+	UpdatedAt: "users.updated_at",
+	CreatedAt: "users.created_at",
 }
 
 // Generated where
@@ -104,16 +114,41 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
+type whereHelpertime_Time struct{ field string }
+
+func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
+}
+func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+}
+func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
 var UserWhere = struct {
-	UserID   whereHelperint
-	Username whereHelperstring
-	Email    whereHelperstring
-	Password whereHelperstring
+	UserID    whereHelperint
+	Username  whereHelperstring
+	Email     whereHelperstring
+	Password  whereHelperstring
+	UpdatedAt whereHelpertime_Time
+	CreatedAt whereHelpertime_Time
 }{
-	UserID:   whereHelperint{field: "`users`.`user_id`"},
-	Username: whereHelperstring{field: "`users`.`username`"},
-	Email:    whereHelperstring{field: "`users`.`email`"},
-	Password: whereHelperstring{field: "`users`.`password`"},
+	UserID:    whereHelperint{field: "`users`.`user_id`"},
+	Username:  whereHelperstring{field: "`users`.`username`"},
+	Email:     whereHelperstring{field: "`users`.`email`"},
+	Password:  whereHelperstring{field: "`users`.`password`"},
+	UpdatedAt: whereHelpertime_Time{field: "`users`.`updated_at`"},
+	CreatedAt: whereHelpertime_Time{field: "`users`.`created_at`"},
 }
 
 // UserRels is where relationship names are stored.
@@ -133,9 +168,9 @@ func (*userR) NewStruct() *userR {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"user_id", "username", "email", "password"}
+	userAllColumns            = []string{"user_id", "username", "email", "password", "updated_at", "created_at"}
 	userColumnsWithoutDefault = []string{"username", "email", "password"}
-	userColumnsWithDefault    = []string{"user_id"}
+	userColumnsWithDefault    = []string{"user_id", "updated_at", "created_at"}
 	userPrimaryKeyColumns     = []string{"user_id"}
 )
 
@@ -488,6 +523,16 @@ func (o *User) Insert(ctx context.Context, exec boil.ContextExecutor, columns bo
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -596,6 +641,12 @@ func (o *User) UpdateG(ctx context.Context, columns boil.Columns) (int64, error)
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *User) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -744,6 +795,14 @@ var mySQLUserUniqueColumns = []string{
 func (o *User) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no users provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
