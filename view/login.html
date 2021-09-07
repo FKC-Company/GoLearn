@@ -13,6 +13,10 @@
     <div class="container">
         <div class="row">
 
+            {{if .error}}
+                <h5 class="text-danger">{{ .error }}</h5>
+            {{end}}
+
             <h3>Login</h3>
             <form action="/auth/login" method="post">
                 <div class="mb-3">

@@ -115,8 +115,6 @@ func UpdateExc(ctx context.Context, c *gin.Context) {
 }
 
 func Login(ctx context.Context, c *gin.Context) {
-	// session := sessions.Default(c)
-
 	var u models.User
 	if err := c.Bind(&u); err != nil {
 		fmt.Errorf("%#v", err)
@@ -125,17 +123,15 @@ func Login(ctx context.Context, c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 
-	fmt.Println("------------------")
-	fmt.Println(username)
-	fmt.Println(password)
-	fmt.Println("------------------")
-
-	// userId := c.Param("user_id")
-	// u.UserID = parseInt(userId)
-
 	// Validate form input
 	if strings.Trim(username, " ") == "" || strings.Trim(password, " ") == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameters can't be empty"})
+		// c.HTML(http.StatusBadRequest, "login.html", map[string]interface{}{
+		// 	"error": "Parameters can't be empty",
+		// })
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Parameters can't be empty",
+		})
 		return
 	}
 
@@ -144,15 +140,15 @@ func Login(ctx context.Context, c *gin.Context) {
 		fmt.Errorf("Get user error: %v", err)
 	}
 
-	// // Check for username and password match, usually from a database
-	// if username != users.Username || password != users.Password {
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
-	// 	return
-	// }
-
+	// Check for username and password match, usually from a database
 	err = bcrypt.CompareHashAndPassword([]byte(users.Password), []byte(password))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
+		// c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
+
+		c.HTML(http.StatusUnauthorized, "login.html", map[string]interface{}{
+			"error": "Authentication failed",
+		})
+
 		return
 	} else {
 		session := sessions.Default(c)
@@ -161,8 +157,12 @@ func Login(ctx context.Context, c *gin.Context) {
 			session.Save()
 		}
 
-		c.JSON(http.StatusOK, gin.H{"hello": session.Get("hello")})
 		// c.JSON(http.StatusOK, gin.H{"message": "Successfully authenticated user"})
+		// c.JSON(http.StatusOK, gin.H{"hello": session.Get("hello")})
+		c.HTML(http.StatusOK, "profile.html", map[string]interface{}{
+			"users": users,
+		})
+
 	}
 
 	// user, user_cookie_err := c.Cookie("user")
@@ -172,6 +172,15 @@ func Login(ctx context.Context, c *gin.Context) {
 
 	// c.SetCookie("user", username, 3600, "/", "localhost", false, true)
 	// c.JSON(200, gin.H{"message": "Hello " + user})
+}
+
+func Logout(ctx context.Context, c *gin.Context) {
+	session := sessions.Default(c)
+	session.Set("mysession", "") // this will mark the session as "written" and hopefully remove the username
+	session.Clear()
+	session.Options(sessions.Options{Path: "/", MaxAge: -1}) // this sets the cookie with a MaxAge of 0
+	session.Save()
+	c.Redirect(http.StatusTemporaryRedirect, "/auth/login")
 }
 
 func parseInt(arg string) int {

@@ -63,18 +63,18 @@ func main() {
 		})
 	}
 
-	auth := route.Group("auth")
+	authGroup := route.Group("auth")
 	{
-		auth.GET("/login", func(ctx *gin.Context) {
-			ctx.HTML(http.StatusOK, "login.html", map[string]interface{}{
-				"title": "testTitle",
-			})
+		authGroup.GET("/login", func(ctx *gin.Context) {
+			ctx.HTML(http.StatusOK, "login.html", map[string]interface{}{})
 		})
-		auth.POST("/login", func(c *gin.Context) {
+		authGroup.POST("/login", func(c *gin.Context) {
 			controllers.Login(ctx, c)
+		})
+		authGroup.GET("/logout", func(c *gin.Context) {
+			controllers.Logout(ctx, c)
 		})
 	}
 
 	route.Run() // listen and serve on 0.0.0.0:8080
-
 }
